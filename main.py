@@ -74,48 +74,52 @@ class ZohaAIBot:
             "PORT": int(os.getenv("PORT", 8000)),
             "HEADLESS": os.getenv("HEADLESS", "true").lower() == "true",
         }
+        
+     async def setup_browser(self):
+         """Setup Chrome browser for WhatsApp Web"""
+         try:
+        from selenium.webdriver.chrome.service import Service
+        options = Options()
 
-    async def setup_browser(self):
-        """Setup Chrome browser for WhatsApp Web"""
-        try:
-            options = Options()
+        # Point to the Chromium binary installed by the Dockerfile
+        options.binary_location = "/usr/bin/chromium"
 
-            # Cloud optimization
-            options.binary_location = "/usr/bin/chromium" 
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-            options.add_argument("--disable-gpu")
-            options.add_argument("--window-size=1920,1080")
-            options.add_argument("--disable-blink-features=AutomationControlled")
-            options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            options.add_experimental_option("useAutomationExtension", False)
+        # Cloud-specific arguments for stability
+        options.add_argument("--headless=new") 
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        
+        # Standard Zoha AI settings
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_argument(
+            "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
 
-            if self.config["HEADLESS"]:
-                options.add_argument("--headless=new")
+        # Explicitly set the service path to the driver we installed
+        service = Service(executable_path="/usr/bin/chromedriver")
+        
+        self.driver = webdriver.Chrome(service=service, options=options)
+        self.driver.execute_script(
+            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+        )
 
-            # User agent
-            options.add_argument(
-                "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            )
+        logger.info("✅ Browser setup complete and stable")
+        return True
 
-            self.driver = webdriver.Chrome(options=options)
-            self.driver.execute_script(
-                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-            )
-
-            logger.info("✅ Browser setup complete")
-            return True
-
-        except Exception as e:
-            logger.error(f"❌ Browser setup failed: {e}")
-            return False
+    except Exception as e:
+        logger.error(f"❌ Browser setup failed: {e}")
+        return False
 
     async def load_session(self):
         """Load saved WhatsApp session"""
         try:
             if os.path.exists(self.cookies_file):
                 self.driver.get("https://web.whatsapp.com")
-                await asyncio.sleep(3)
+        await asyncio.sleep(3)
 
                 with open(self.cookies_file, "rb") as f:
                     cookies = pickle.load(f)
