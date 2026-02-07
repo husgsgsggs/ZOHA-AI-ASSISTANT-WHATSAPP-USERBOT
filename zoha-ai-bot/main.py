@@ -22,6 +22,23 @@ import qrcode
 import io
 import aiohttp
 import random
+import shutil
+
+# After bot initialization
+    async def download_profile_pic():
+    """Download profile picture if not exists"""
+    if not os.path.exists("assets/profile.jpg"):
+        os.makedirs("assets", exist_ok=True)
+        try:
+            # Download from your URL
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://i.postimg.cc/26t81Z4B/IMG-20250207-155905.jpg") as resp:
+                    if resp.status == 200:
+                        with open("assets/profile.jpg", "wb") as f:
+                            f.write(await resp.read())
+                        logger.info("✅ Downloaded profile picture")
+        except:
+            logger.warning("⚠️ Could not download profile picture")
 
 # Setup logging
 logging.basicConfig(
@@ -682,7 +699,7 @@ async def restart():
 async def startup():
     # Create assets directory if not exists
     os.makedirs("assets", exist_ok=True)
-    
+    await download_profile_pic()
     await bot.setup_browser()
     
     # Try to load session
@@ -690,7 +707,7 @@ async def startup():
         asyncio.create_task(bot.monitor_messages())
     else:
         logger.info("⏳ Waiting for pairing...")
-
+        
 # Shutdown
 @app.after_serving
 async def shutdown():
