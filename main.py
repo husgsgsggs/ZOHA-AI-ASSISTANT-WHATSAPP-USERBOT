@@ -76,7 +76,7 @@ class ZohaAIBot:
             "HEADLESS": os.getenv("HEADLESS", "true").lower() == "true",
         }
         
-     async def setup_browser(self):
+    async def setup_browser(self):
          """Setup Chrome browser for WhatsApp Web"""
          try:
         
