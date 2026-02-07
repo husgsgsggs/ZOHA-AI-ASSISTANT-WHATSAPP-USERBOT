@@ -764,8 +764,9 @@ async def status_api():
 
 @app.route("/restart")
 async def restart():
-    await bot.cleanup()
     global bot
+    
+    await bot.cleanup()
     bot = ZohaAIBot()
     await bot.setup_browser()
     return jsonify({"success": True, "message": "Bot restarted"})
