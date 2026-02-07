@@ -6,6 +6,7 @@ import asyncio
 import logging
 import pickle
 import base64
+from selenium.webdriver.chrome.service import Service
 from datetime import datetime
 from typing import Optional, Dict, List
 from quart import Quart, request, jsonify, render_template_string
@@ -78,7 +79,7 @@ class ZohaAIBot:
      async def setup_browser(self):
          """Setup Chrome browser for WhatsApp Web"""
          try:
-        from selenium.webdriver.chrome.service import Service
+        
         options = Options()
 
         # Point to the Chromium binary installed by the Dockerfile
