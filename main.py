@@ -24,22 +24,6 @@ import aiohttp
 import random
 import shutil
 
-# After bot initialization
-    async def download_profile_pic():
-    """Download profile picture if not exists"""
-    if not os.path.exists("assets/profile.jpg"):
-        os.makedirs("assets", exist_ok=True)
-        try:
-            # Download from your URL
-            async with aiohttp.ClientSession() as session:
-                async with session.get("https://i.postimg.cc/26t81Z4B/IMG-20250207-155905.jpg") as resp:
-                    if resp.status == 200:
-                        with open("assets/profile.jpg", "wb") as f:
-                            f.write(await resp.read())
-                        logger.info("✅ Downloaded profile picture")
-        except:
-            logger.warning("⚠️ Could not download profile picture")
-
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -86,6 +70,23 @@ class ZohaAIBot:
             "PORT": int(os.getenv("PORT", 8000)),
             "HEADLESS": os.getenv("HEADLESS", "true").lower() == "true"
         }
+        
+# After bot initialization
+    async def download_profile_pic():
+    """Download profile picture if not exists"""
+    if not os.path.exists("assets/profile.jpg"):
+        os.makedirs("assets", exist_ok=True)
+        try:
+            # Download from your URL
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://i.postimg.cc/26t81Z4B/IMG-20250207-155905.jpg") as resp:
+                    if resp.status == 200:
+                        with open("assets/profile.jpg", "wb") as f:
+                            f.write(await resp.read())
+                        logger.info("✅ Downloaded profile picture")
+        except:
+            logger.warning("⚠️ Could not download profile picture")
+        
     
     async def setup_browser(self):
         """Setup Chrome browser for WhatsApp Web"""
