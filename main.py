@@ -622,9 +622,7 @@ I'm {self.config['BOT_NAME']}, a powerful AI assistant created by {self.config['
 
             # Clear and send
             input_box.click()
-                        
-ents[0].innerHTML = arguments[1];", input_box, ""
-            )
+            self.driver.execute_script("arguments[0].innerHTML = '';", input_box)
             input_box.send_keys(message)
             input_box.send_keys(Keys.RETURN)
 
@@ -645,8 +643,8 @@ ents[0].innerHTML = arguments[1];", input_box, ""
             logger.error(f"❌ Cleanup error: {e}")
 
 
-            self.driver.execute_script(
-                "argum    html = """
+        
+    html = """
     <!DOCTYPE html>
     <html>
     <head>
