@@ -1,41 +1,44 @@
-# Use a Python base image
+# Use a Python base image that supports the latest Selenium
 FROM python:3.10-slim
 
-# Install system dependencies for Chromium and Selenium
+# Step 1: Install Chromium and the essential Linux drivers
+# These specific libraries prevent the 'browser crashed' error in Docker
 RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    unzip \
-    curl \
-    libnss3 \
-    libgconf-2-4 \
-    libxss1 \
-    libasound2 \
-    libatk1.0-0 \
-    libgtk-3-0 \
-    libgbm1 \
     chromium \
     chromium-driver \
-    && rm -rf /var/lib/apt/lists/*
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for the paths
+# Step 2: Set Environment Variables for Selenium
+# This ensures your main.py knows exactly where to find the browser
 ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install Python requirements
+# Step 3: Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Step 4: Copy all project files
 COPY . .
 
-# Create assets directory for profile pictures
+# Step 5: Ensure your assets folder for the profile pic is ready
 RUN mkdir -p assets
 
-# Expose the port used in your main.py config
+# Step 6: Expose Port 8000 for Sevalla
 EXPOSE 8000
 
-# Start the application
+# Step 7: Start the bot
 CMD ["python", "main.py"]
