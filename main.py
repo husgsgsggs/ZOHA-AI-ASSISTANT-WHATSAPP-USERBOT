@@ -622,6 +622,29 @@ I'm {self.config['BOT_NAME']}, a powerful AI assistant created by {self.config['
 
             # Clear and send
             input_box.click()
+                        
+ents[0].innerHTML = arguments[1];", input_box, ""
+            )
+            input_box.send_keys(message)
+            input_box.send_keys(Keys.RETURN)
+
+            logger.info(f"📤 Sent to {chat_name}")
+            await asyncio.sleep(1)
+
+        except Exception as e:
+            logger.error(f"❌ Send message error: {e}")
+
+    async def cleanup(self):
+        """Cleanup before exit"""
+        try:
+            if self.driver:
+                await self.save_session()
+                self.driver.quit()
+            logger.info("✅ Cleanup complete")
+        except Exception as e:
+            logger.error(f"❌ Cleanup error: {e}")
+
+
             self.driver.execute_script(
                 "argum    html = """
     <!DOCTYPE html>
@@ -716,8 +739,8 @@ I'm {self.config['BOT_NAME']}, a powerful AI assistant created by {self.config['
             function showPhoneInput() {
                 document.getElementById('setup-options').style.display = 'none';
                 document.getElementById('phone-input-section').style.display = 'block';
-            }
-            function backToOptions() {
+    }
+    function backToOptions() {
                 document.getElementById('setup-options').style.display = 'block';
                 document.getElementById('phone-input-section').style.display = 'none';
                 document.getElementById('display-area').style.display = 'none';
@@ -759,26 +782,6 @@ I'm {self.config['BOT_NAME']}, a powerful AI assistant created by {self.config['
     </body>
     </html>
     """
-ents[0].innerHTML = arguments[1];", input_box, ""
-            )
-            input_box.send_keys(message)
-            input_box.send_keys(Keys.RETURN)
-
-            logger.info(f"📤 Sent to {chat_name}")
-            await asyncio.sleep(1)
-
-        except Exception as e:
-            logger.error(f"❌ Send message error: {e}")
-
-    async def cleanup(self):
-        """Cleanup before exit"""
-        try:
-            if self.driver:
-                await self.save_session()
-                self.driver.quit()
-            logger.info("✅ Cleanup complete")
-        except Exception as e:
-            logger.error(f"❌ Cleanup error: {e}")
 
 
 # Initialize bot
