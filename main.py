@@ -101,7 +101,7 @@ class ZohaAIBot:
         )
 
         # Explicitly set the service path to the driver we installed
-        service = Service(executable_path="/usr/bin/chromedriver")
+            service = Service(executable_path="/usr/bin/chromedriver")
         
         self.driver = webdriver.Chrome(service=service, options=options)
         self.driver.execute_script(
