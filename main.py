@@ -180,6 +180,34 @@ class ZohaAIBot:
             logger.error(f"❌ Session save error: {e}")
             return False
 
+    async def get_pairing_code(self, phone_number: str):
+        """Generate a pairing code using a phone number"""
+        try:
+            self.driver.get("https://web.whatsapp.com")
+            # Wait for the "Link with phone number" button
+            link_btn = WebDriverWait(self.driver, 20).until(
+            EC.element_to_be_clickable((By.XPATH, '//*[contains(text(), "Link with phone number")]'))
+        )
+            link_btn.click()
+        
+            # Enter the phone number
+            phone_input = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'input[aria-label="Type your phone number."]'))
+        )
+            phone_input.send_keys(phone_number)
+            phone_input.send_keys(Keys.ENTER)
+        
+            # Wait for the 8-character code to appear
+            code_element = WebDriverWait(self.driver, 20).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-ref]'))
+        )
+            self.pairing_code = code_element.text
+            return self.pairing_code
+        except Exception as e:
+            logger.error(f"❌ Pairing code generation failed: {e}")
+            return None
+    
+
     async def get_qr_code(self):
         """Generate QR code for pairing"""
         try:
@@ -595,7 +623,143 @@ I'm {self.config['BOT_NAME']}, a powerful AI assistant created by {self.config['
             # Clear and send
             input_box.click()
             self.driver.execute_script(
-                "arguments[0].innerHTML = arguments[1];", input_box, ""
+                "argum    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Zoha AI WhatsApp Bot</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+            .container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; width: 100%; text-align: center; }
+            h1 { color: #25D366; margin-bottom: 10px; font-size: 28px; }
+            .subtitle { color: #666; margin-bottom: 30px; font-size: 16px; }
+            .status { padding: 15px; border-radius: 10px; margin: 20px 0; font-weight: bold; }
+            .connected { background: #d4ffd4; color: #155724; border: 2px solid #28a745; }
+            .disconnected { background: #ffe0e0; color: #721c24; border: 2px solid #dc3545; }
+            .btn { background: #25D366; color: white; padding: 15px 30px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 10px 0; display: inline-block; text-decoration: none; transition: all 0.3s; width: 100%; }
+            .btn:hover { background: #1da851; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3); }
+            .code-box { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; font-family: monospace; font-size: 24px; letter-spacing: 5px; border: 2px dashed #25D366; }
+            .instructions { background: #e8f4ff; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left; }
+            .qr-container { margin: 20px 0; }
+            .qr-container img { max-width: 250px; border: 2px solid #ddd; border-radius: 10px; padding: 10px; background: white; }
+            .footer { margin-top: 30px; color: #666; font-size: 14px; }
+            .profile-preview { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px; }
+            .profile-preview img { max-width: 100px; border-radius: 50%; border: 3px solid #25D366; }
+            .input-field { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; }
+            #loader { margin: 20px 0; display: none; }
+            .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #25D366; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; }
+            @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🤖 Zoha AI WhatsApp Bot</h1>
+            <p class="subtitle">Created by Zoha and her husband</p>
+            
+            <div class="status {{ 'connected' if connected else 'disconnected' }}">
+                {% if connected %} ✅ Bot is connected and running 24/7 {% else %} ❌ Bot is not connected {% endif %}
+            </div>
+            
+            {% if profile_pic_exists %}
+            <div class="profile-preview">
+                <h3>📸 Profile Picture Preview:</h3>
+                <img src="/static/assets/profile.jpg" alt="Profile Preview">
+            </div>
+            {% endif %}
+            
+            {% if not connected %}
+                <div id="setup-options">
+                    <p>Click a method to connect:</p>
+                    <button onclick="getQR()" class="btn">📷 Link with QR Code</button>
+                    <button onclick="showPhoneInput()" class="btn" style="background: #007bff;">📱 Link with Phone Number</button>
+                </div>
+
+                <div id="phone-input-section" style="display:none;">
+                    <input type="text" id="phone-num" class="input-field" placeholder="Phone with country code (e.g. 92300...)">
+                    <button onclick="getPairCode()" class="btn">Get Pairing Code</button>
+                    <button onclick="backToOptions()" style="background:none; border:none; color:#666; cursor:pointer;">← Back</button>
+                </div>
+
+                <div id="loader">
+                    <div class="spinner"></div>
+                    <p>Connecting to WhatsApp...</p>
+                </div>
+
+                <div id="display-area" style="display:none;">
+                    <div id="qr-result" class="qr-container" style="display:none;">
+                        <h3>Scan this QR:</h3>
+                        <img id="qr-img" src="">
+                    </div>
+                    <div id="code-result" style="display:none;">
+                        <h3>Your Pairing Code:</h3>
+                        <div id="pairing-code-txt" class="code-box"></div>
+                        <p>Enter this code on your phone</p>
+                    </div>
+                </div>
+            {% else %}
+                <div class="instructions">
+                    <h3>✅ Bot is Running</h3>
+                    <p>Connected and ready for commands like <code>.menu</code> or <code>.gemini</code></p>
+                </div>
+                <a href="/status" class="btn">📊 View Status</a>
+                <a href="/restart" class="btn" style="background: #ff6b6b;">🔄 Restart Bot</a>
+            {% endif %}
+            
+            <div class="footer">
+                <p>Version 1.0.0 | Created by Zoha & her husband</p>
+            </div>
+        </div>
+
+        <script>
+            function showPhoneInput() {
+                document.getElementById('setup-options').style.display = 'none';
+                document.getElementById('phone-input-section').style.display = 'block';
+            }
+            function backToOptions() {
+                document.getElementById('setup-options').style.display = 'block';
+                document.getElementById('phone-input-section').style.display = 'none';
+                document.getElementById('display-area').style.display = 'none';
+            }
+            async function getQR() {
+                toggleLoading(true);
+                const r = await fetch('/pair-qr');
+                const d = await r.json();
+                toggleLoading(false);
+                if(d.success) {
+                    document.getElementById('display-area').style.display = 'block';
+                    document.getElementById('qr-result').style.display = 'block';
+                    document.getElementById('qr-img').src = d.qr_code;
+                }
+            }
+            async function getPairCode() {
+                const p = document.getElementById('phone-num').value;
+                if(!p) return alert("Enter phone number");
+                toggleLoading(true);
+                const r = await fetch('/pair-code', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({phone: p})
+                });
+                const d = await r.json();
+                toggleLoading(false);
+                if(d.success) {
+                    document.getElementById('display-area').style.display = 'block';
+                    document.getElementById('code-result').style.display = 'block';
+                    document.getElementById('pairing-code-txt').innerText = d.code;
+                }
+            }
+            function toggleLoading(show) {
+                document.getElementById('loader').style.display = show ? 'block' : 'none';
+                document.getElementById('setup-options').style.display = show ? 'none' : 'none';
+                document.getElementById('phone-input-section').style.display = 'none';
+            }
+        </script>
+    </body>
+    </html>
+    """
+ents[0].innerHTML = arguments[1];", input_box, ""
             )
             input_box.send_keys(message)
             input_box.send_keys(Keys.RETURN)
@@ -624,108 +788,7 @@ bot = ZohaAIBot()
 # Web routes
 @app.route("/")
 async def home():
-    html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Zoha AI WhatsApp Bot</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-            .container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 500px; width: 100%; text-align: center; }
-            h1 { color: #25D366; margin-bottom: 10px; font-size: 28px; }
-            .subtitle { color: #666; margin-bottom: 30px; font-size: 16px; }
-            .status { padding: 15px; border-radius: 10px; margin: 20px 0; font-weight: bold; }
-            .connected { background: #d4ffd4; color: #155724; border: 2px solid #28a745; }
-            .disconnected { background: #ffe0e0; color: #721c24; border: 2px solid #dc3545; }
-            .btn { background: #25D366; color: white; padding: 15px 30px; border: none; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; margin: 15px 0; display: inline-block; text-decoration: none; transition: all 0.3s; }
-            .btn:hover { background: #1da851; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3); }
-            .code-box { background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; font-family: monospace; font-size: 24px; letter-spacing: 5px; border: 2px dashed #25D366; }
-            .instructions { background: #e8f4ff; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left; }
-            .instructions h3 { color: #007bff; margin-bottom: 10px; }
-            .instructions ol { padding-left: 20px; }
-            .instructions li { margin: 10px 0; }
-            .qr-container { margin: 20px 0; }
-            .qr-container img { max-width: 250px; border: 2px solid #ddd; border-radius: 10px; padding: 10px; background: white; }
-            .footer { margin-top: 30px; color: #666; font-size: 14px; }
-            .profile-preview { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 10px; }
-            .profile-preview img { max-width: 100px; border-radius: 50%; border: 3px solid #25D366; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🤖 Zoha AI WhatsApp Bot</h1>
-            <p class="subtitle">Created by Zoha and her husband</p>
-            
-            <div class="status {{ 'connected' if connected else 'disconnected' }}">
-                {% if connected %}
-                    ✅ Bot is connected and running 24/7
-                {% else %}
-                    ❌ Bot is not connected
-                {% endif %}
-            </div>
-            
-            <!-- Profile Picture Preview -->
-            {% if profile_pic_exists %}
-            <div class="profile-preview">
-                <h3>📸 Profile Picture Preview:</h3>
-                <p>This image will appear when users type <code>.menu</code></p>
-                <img src="{{ url_for('static', filename='assets/profile.jpg') }}" alt="Profile Preview">
-            </div>
-            {% endif %}
-            
-            {% if not connected %}
-                <p>Click below to connect your WhatsApp:</p>
-                <a href="/pair" class="btn">🔗 Connect WhatsApp</a>
-                
-                {% if pairing_code %}
-                <div class="code-box">{{ pairing_code }}</div>
-                
-                <div class="instructions">
-                    <h3>📱 How to Connect:</h3>
-                    <ol>
-                        <li>Open WhatsApp on your phone</li>
-                        <li>Tap Settings → Linked Devices</li>
-                        <li>Tap "Link a Device"</li>
-                        <li>Enter this code: <strong>{{ pairing_code }}</strong></li>
-                        <li>Or scan the QR code below</li>
-                    </ol>
-                </div>
-                
-                {% if qr_code %}
-                <div class="qr-container">
-                    <h3>📷 Scan QR Code:</h3>
-                    <img src="{{ qr_code }}" alt="QR Code">
-                </div>
-                {% endif %}
-                {% endif %}
-                
-            {% else %}
-                <div class="instructions">
-                    <h3>✅ Bot is Running</h3>
-                    <p>The bot is connected to your WhatsApp and running 24/7.</p>
-                    <p><strong>Commands available:</strong></p>
-                    <ul style="text-align: left; padding-left: 20px;">
-                        <li><code>.menu</code> - Show bot menu with profile picture</li>
-                        <li><code>.gemini &lt;query&gt;</code> - Ask Gemini AI</li>
-                        <li><code>.grok &lt;query&gt;</code> - Ask Grok AI</li>
-                        <li><code>.help</code> - Show help guide</li>
-                    </ul>
-                </div>
-                
-                <a href="/status" class="btn">📊 View Status</a>
-                <a href="/restart" class="btn" style="background: #ff6b6b;">🔄 Restart Bot</a>
-            {% endif %}
-            
-            <div class="footer">
-                <p>Version 1.0.0 | Auto-session saving | 24/7 Operation</p>
-                <p>📸 Profile picture from assets/profile.jpg</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+    
     return await render_template_string(
         html,
         connected=bot.is_connected,
@@ -735,23 +798,19 @@ async def home():
     )
 
 
-@app.route("/pair")
-async def pair():
-    if not bot.driver:
-        await bot.setup_browser()
-
+@app.route("/pair-qr")
+async def pair_qr():
+    if not bot.driver: await bot.setup_browser()
     qr_data = await bot.get_qr_code()
-    if qr_data:
-        return jsonify(
-            {
-                "success": True,
-                "pairing_code": qr_data["code"],
-                "qr_code": qr_data["qr"],
-                "message": "Scan QR or enter code in WhatsApp",
-            }
-        )
-    return jsonify({"success": False, "error": "Failed to generate QR"})
+    return jsonify({"success": True, "qr_code": qr_data["qr"]}) if qr_data else jsonify({"success": False})
 
+@app.route("/pair-code", methods=["POST"])
+async def pair_code():
+    data = await request.get_json()
+    phone = data.get("phone")
+    if not bot.driver: await bot.setup_browser()
+    code = await bot.get_pairing_code(phone)
+    return jsonify({"success": True, "code": code}) if code else jsonify({"success": False})
 
 @app.route("/status")
 async def status_api():
